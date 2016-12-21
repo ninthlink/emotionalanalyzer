@@ -20,11 +20,11 @@ $results = array();
 
 // look for txt to process
 $txt = '';
-if ( !isset( $_REQUEST['txt'] ) ) {
+if ( !isset( $_POST['t'] ) ) {
   echo json_encode( array('error' => 'no txt = no checking...' ) );
   die;
 } else {
-  $txt = $_REQUEST['txt'];
+  $txt = $_POST['t'];
   // #todo SANITIZE?!
 }
 

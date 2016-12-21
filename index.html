@@ -166,7 +166,7 @@ jQuery(function($) {
       // replace newlines with spaces?
       txt = txt.replace(/\n/g, " ");
 
-      $.get('api/checker.php?txt='+ txt, function(response) {
+      $.post('api/checker.php','t='+ txt, function(response) {
         console.log('SUCCESS!');
         console.log(response);
 

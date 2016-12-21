@@ -11,11 +11,11 @@ $results = array();
 
 // look for url to process
 $url = '';
-if ( !isset( $_REQUEST['url'] ) ) {
+if ( !isset( $_POST['u'] ) ) {
   echo json_encode( array('error' => 'no url = no checking...' ) );
   die;
 } else {
-  $url = $_REQUEST['url'];
+  $url = $_POST['u'];
   // #todo SANITIZE?!
 }
 

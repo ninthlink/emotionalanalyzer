@@ -123,16 +123,16 @@ jQuery(function($) {
 
     // populate url...
     $('#urlhere').attr('href', theurl).html(theurl);
-
     // screenshot?!
-    $.get('api/mpa-imager.php?url='+ theurl, function( response ) {
+    $.post('api/mpa-imager.php', 'u='+ theurl, function( response ) {
       $('#shots').attr('src', response );
       // reset the btn now?
       $btn.button('reset');
     });
-
     // load the text on the page via our grabber.php...
-    $.get('api/grabber.php?url='+ theurl, function( response ) {
+    $.post('api/grabber.php', 'u='+ theurl, function( response ) {
+	//console.log('SUCCESS?1');
+	//console.log(response);
         // SUCCESS??
         var rtxt = '';
         // maybe its ok if we only look for these specific html elements?!

@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>EffectChecker</title>
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css">
+  	<style type="text/css">
+  	/* Sticky footer styles */
+  	html {
+  	  position: relative;
+  	  min-height: 100%;
+  	}
+  	body {
+  	  /* Margin bottom by footer height */
+  	  margin-bottom: 60px;
+  	}
+  	.footer {
+  		background-color: #f5f5f5;
+  		padding-top: 20px;
+  	  position: absolute;
+  	  bottom: 0;
+  	  width: 100%;
+  	  height: 60px;
+  	}
+  	</style>
+  </head>
+  <body>
+    <div class="container">
+    	<!-- Main jumbotron for a primary marketing message or call to action -->
+    	<div class="jumbotron">
+    		<h1>Effect Checker</h1>
+    		<p>Enter a URL below to grab the text and analyze the emotionality therein.</p>
+    		<form method="post" class="form-inline" id="topform">
+    			<div class="form-group">
+    				<label class="sr-only" for="url">Enter a URL here</label>
+    				<div class="input-group">
+    					<div class="input-group-addon"><i class="fa fa-globe"></i></div>
+    					<input type="url" name="url" class="form-control" id="url" value="https://www.ninthlink.com/" placeholder="Enter a URL here" size="70" required tabindex=1>
+    				</div>
+    			</div>
+    			<button type="submit" data-loading-text="Loading..." class="btn btn-primary" autocomplete="off">Submit</button>
+    		</form>
+    	</div>
+    </div>
+    <div class="container" id="pageresults">
+      <div class="row">
+        <div class="col-sm-6">
+          <img src="https://placekitten.com/g/1000/570" class="img-responsive" id="shots" alt="screenshot here" />
+        </div>
+        <div class="col-sm-6">
+          <h3><a href="#" id="urlhere" target="_blank" rel="nofollow">#</a></h3>
+          <form method="post" id="txtform">
+            <div class="form-group">
+              <label for="txt" class="sr-only">Text to Process</label>
+              <textarea class="form-control" name="txt" id="txt" rows="9" placeholder="Text to Process"></textarea>
+            </div>
+            <button type="submit" data-loading-text="Loading..." class="btn btn-primary" autocomplete="off">Submit</button>
+          </form>
+        </div>
+      </div>
+      <div class="row" id="ecresults">
+        <!-- wordclouds -->
+        <div class="col-sm-4">
+          <h4></h4>
+        </div>
+        <div class="col-sm-4">
+          <h4></h4>
+        </div>
+        <div class="col-sm-4">
+          <h4></h4>
+        </div>
+        <div class="col-sm-4">
+          <h4></h4>
+        </div>
+        <div class="col-sm-4">
+          <h4></h4>
+        </div>
+        <div class="col-sm-4">
+          <h4></h4>
+        </div>
+      </div>
+    </div>
+    <footer class="footer">
+    	<div class="container">
+    	  <p class="text-muted">
+    			&copy; Copyright <span id="thisyear"></span> <a href="http://www.ninthlink.com/" target="_blank">Ninthlink, Inc.</a>
+    			<a href="https://github.com/chousmith/nlkmpat" target="_blank" rel="nofollow" title="source on github"><i class="fa fa-github"></i></a>
+    		</p>
+    	</div>
+    </footer>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+    <script type="text/javascript">
+// should this all be indented?
+var wclouds = [ 'anxiety', 'compassion', 'confidence', 'depression', 'happiness', 'hostility' ];
+jQuery(function($) {
+  // initial hide pageresults
+  $pageresults = $('#pageresults');
+  $pageresults.hide();
+  $ecresults = $('#ecresults');
+  $ecresults.hide();
+
+	// quick sub footer year why not
+	$('#thisyear').html(function() {
+		var nowd = new Date();
+		return nowd.getFullYear();
+	});
+
+  // top form submit handling
+  $('#topform').submit(function() {
+    var $form = $(this);
+    var $btn = $form.find('button');
+    // loading the btn...
+    $btn.button('loading');
+    // hide any results?
+    $pageresults.hide();
+    // check the URL
+    var theurl = $('#url').val();
+    //alert('submitting... url = '+ $('#url').val() );
+    // #todo VALIDATE URL?
+
+    // populate url...
+    $('#urlhere').attr('href', theurl).html(theurl);
+
+    // screenshot?!
+    $.get('api/mpa-imager.php?url='+ theurl, function( response ) {
+      $('#shots').attr('src', response );
+      // reset the btn now?
+      $btn.button('reset');
+    });
+
+    // load the text on the page via our grabber.php...
+    $.get('api/grabber.php?url='+ theurl, function( response ) {
+        // SUCCESS??
+        var rtxt = '';
+        // maybe its ok if we only look for these specific html elements?!
+        // #todo maybe do this in the php instead?
+        $(response).find('h1,h2,h3,h4,h5,h6,p,li').each(function() {
+          // llook for the text
+          var ttxt = $.trim( $(this).text() );
+          if ( ttxt != '' ) {
+            rtxt = rtxt + ttxt +"\n\n";
+          }
+        });
+        //console.log(rtxt);
+        $('#txt').val(rtxt);
+    });
+    // and actually show that next step..
+    $pageresults.show();
+    // but wipe any next next...
+    $ecresults.hide().find('pre').empty();
+    // and then
+    return false;
+  });
+
+  $('#txtform').submit( function() {
+    $form = $(this);
+    var txt = $('#txt').val();
+    if ( txt !== '' ) {
+      // loading...
+      $btn = $form.find('button');
+      $btn.button('loading');
+
+      // replace newlines with spaces?
+      txt = txt.replace(/\n/g, " ");
+
+      $.get('api/checker.php?txt='+ txt, function(response) {
+        console.log('SUCCESS!');
+        console.log(response);
+
+        // yay! now do stuff?
+        $ecresults.show();
+        // detailedScore ?
+
+        // wordCloudScore
+
+        // movingAverage30Score...
+
+        // and also un loading the btn
+        $btn.button('reset');
+      });
+    }
+    return false;
+  });
+});
+    </script>
+  </body>
+</html>

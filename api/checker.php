@@ -26,8 +26,13 @@ if ( !isset( $_POST['t'] ) ) {
 } else {
   $txt = $_POST['t'];
   // #todo SANITIZE?!
+  $txt = preg_replace("/[\r\n]+/", " ", $txt );
 }
-
+/*
+$results['t'] = $txt;
+echo json_encode($results);
+die;
+*/
 if ( !function_exists( 'curl_init' ) ) {
   echo json_encode( array('error' => 'curl must be enabled to make this work' ) );
   die;
@@ -44,8 +49,10 @@ $data = array(
   'text' => $txt
 );
 $data_str = json_encode( $data );
-//echo $data_str;
 
+//$flatstr = 'ID=123ABC&user=ninthlink&scoreType='. $sc .'&valenceSetting='. $valence .'&text='. $txt;
+//echo $flatstr;
+//echo "\n\n";
 // init curl...
 $ch = curl_init();
 
@@ -68,12 +75,13 @@ curl_setopt($ch, CURLOPT_HTTPHEADER, array(
   'Content-Type: application/json',
   'Content-Length: '. strlen( $data_str )
 ) );
+
 //echo 'curling...' ."\n\n";
 
 //$report = curl_getinfo( $ch );
 //print_r( $report );
 
-$result[ $sc ] = json_decode( curl_exec( $ch ) );
+$result[ $sc ] = curl_exec( $ch );
 curl_close( $ch );
 
 //print_r( $result );

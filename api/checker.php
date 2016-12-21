@@ -78,10 +78,13 @@ curl_setopt($ch, CURLOPT_HTTPHEADER, array(
 
 //echo 'curling...' ."\n\n";
 
-//$report = curl_getinfo( $ch );
 //print_r( $report );
 
 $result[ $sc ] = curl_exec( $ch );
+
+$report = curl_getinfo( $ch );
+$result[ 'getinfo'. $sc ] = $report;
+
 curl_close( $ch );
 
 //print_r( $result );

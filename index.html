@@ -91,11 +91,11 @@ div.jqcloud span.w1 {
 }
 /* colors */
 .anxiety { color: #28f; }
-.compassion { color: #1b0; }
-.confidence { color: #e0c; }
-.depression { color: #30c; }
-.happiness { color: #f80; }
 .hostility { color: #e00; }
+.depression { color: #30c; }
+.confidence { color: #e0c; }
+.compassion { color: #1b0; }
+.happiness { color: #f80; }
   	</style>
   </head>
   <body>
@@ -152,7 +152,9 @@ div.jqcloud span.w1 {
     <script type="text/javascript">
 // should this all be indented?
 //var wclouds = [ 'hostility', 'happiness', 'depression', 'confidence', 'compassion', 'anxiety' ];
-var wclouds = [ 'anxiety', 'compassion', 'confidence', 'depression', 'happiness','hostility' ];
+var emotionColors = ['#2288ff', '#ee0000', '#3300cc', '#ee00cc', '#11bb00', '#ff8800'];
+var yaxisValues = ["Very Low", "Low", "Typical", "High", "Very High"];
+var wclouds = [ 'anxiety','hostility', 'depression', 'confidence', 'compassion', 'happiness' ];
 var emaChart;
 var emaLevels;
 function chartMovingAverage() {
@@ -167,28 +169,28 @@ function chartMovingAverage() {
       // anxiety: [{'chartLevel':'.79','averagePerWord':'.06'},...]
       var cleanupArrs = {
         ChartLevel: [],
-        Average: []
+        AveragePerWord: []
       };
       // sigh, and then...
       $.each( emaLevels[value], function( i2, v2 ) {
-        cleanupArrs['ChartLevel'][i2] = v2['chartLevel'];
-        cleanupArrs['Average'][i2] = v2['averagePerWord'];
+        cleanupArrs['ChartLevel'][i2] = parseFloat( v2['chartLevel'] );
+        cleanupArrs['AveragePerWord'][i2] = parseFloat( v2['averagePerWord'] );
       });
       // then replace...
       emaLevels[value] = cleanupArrs;
     }
 
-    emaSeries[value] = {
+    emaSeries[index] = {
         name: value,
         data: emaLevels[value]['ChartLevel']
     };
   });
-
+  /*
   console.log('draw the chart?! emaLevels: ');
   console.log(emaLevels);
   console.log('emaSeries: ');
   console.log(emaSeries);
-
+  */
   emaChart = new Highcharts.Chart({
         chart: {
             renderTo: 'emachart',
@@ -197,7 +199,7 @@ function chartMovingAverage() {
             zoomType: 'x',
             spacingRight: 20
         },
-        //colors: [emotionColors[0], emotionColors[1], emotionColors[2], emotionColors[3], emotionColors[4], emotionColors[5] ],
+        colors: emotionColors,
         title: {
             text: '30-Word Moving Window Score Over Time'
         },
@@ -226,7 +228,7 @@ function chartMovingAverage() {
                     }
                 },
                 marker: {
-                    enabled: false,
+                    enabled: true,
                     states: {
                         hover: {
                             enabled: true,
@@ -249,7 +251,10 @@ function chartMovingAverage() {
         exporting: {
             enabled: true
         },
-        series: emaSeries
+        series: [{
+          name: 'anxiety',
+          data: emaLevels.anxiety.ChartLevel
+        }]
     });
 }
 
@@ -270,8 +275,11 @@ $(function() {
   $('#topform').submit(function() {
     var $form = $(this);
     var $btn = $form.find('button');
-    // loading the btn...
+    // loading the top btn
     $btn.button('loading');
+    // and the next btn
+    var $nextbtn = $('#txtform button');
+    $nextbtn.button('loading');
     // hide any results?
     $pageresults.hide();
     // check the URL
@@ -284,7 +292,7 @@ $(function() {
     // screenshot?!
     $.post('api/mpa-imager.php', 'u='+ theurl, function( response ) {
       $('#shots').attr('src', response );
-      // reset the btn now?
+      // reset the top btn now?
       $btn.button('reset');
     });
     // load the text on the page via our grabber.php...
@@ -304,11 +312,11 @@ $(function() {
         });
         //console.log(rtxt);
         $('#txt').val(rtxt);
+        // and then unloading that btn
+        $nextbtn.button('reset');
     });
     // and actually show that next step..
     $pageresults.show();
-    // but wipe any next next...
-    $ecresults.hide().find('pre').empty();
     // and then
     return false;
   });

@@ -132,6 +132,7 @@ div.jqcloud span.w1 {
           </form>
         </div>
       </div>
+      <div class="row" id="emachart"></div>
       <div class="row" id="ecresults">
         <!-- wordclouds -->
       </div>
@@ -146,11 +147,113 @@ div.jqcloud span.w1 {
     </footer>
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+    <script src="includes/highcharts.js"></script>
     <script src="includes/jqcloud-0.2.2.min.js"></script>
     <script type="text/javascript">
 // should this all be indented?
-var wclouds = [ 'hostility', 'happiness', 'depression', 'confidence', 'compassion', 'anxiety' ];
-jQuery(function($) {
+//var wclouds = [ 'hostility', 'happiness', 'depression', 'confidence', 'compassion', 'anxiety' ];
+var wclouds = [ 'anxiety', 'compassion', 'confidence', 'depression', 'happiness','hostility' ];
+var emaChart;
+var emaLevels;
+function chartMovingAverage() {
+  var emaSeries = [];
+  $.each(wclouds, function( index, value ) {
+    // first check if we need to loop and clean the input to split values of array
+    // that sounds confusing
+    // issue is, effectcheck.com Api/MovingAverage30 gives results like
+    // anxiety:{ ChartLevel: [1,2,3,...], Average..: [1,1,1,...gma] }
+    if ( $.isArray( emaLevels[value]['ChartLevel'] ) === false ) {
+      // then in this case we assume our API returned something like
+      // anxiety: [{'chartLevel':'.79','averagePerWord':'.06'},...]
+      var cleanupArrs = {
+        ChartLevel: [],
+        Average: []
+      };
+      // sigh, and then...
+      $.each( emaLevels[value], function( i2, v2 ) {
+        cleanupArrs['ChartLevel'][i2] = v2['chartLevel'];
+        cleanupArrs['Average'][i2] = v2['averagePerWord'];
+      });
+      // then replace...
+      emaLevels[value] = cleanupArrs;
+    }
+
+    emaSeries[value] = {
+        name: value,
+        data: emaLevels[value]['ChartLevel']
+    };
+  });
+
+  console.log('draw the chart?! emaLevels: ');
+  console.log(emaLevels);
+  console.log('emaSeries: ');
+  console.log(emaSeries);
+
+  emaChart = new Highcharts.Chart({
+        chart: {
+            renderTo: 'emachart',
+            defaultSeriesType: 'spline',
+            backgroundColor: 'Transparent',
+            zoomType: 'x',
+            spacingRight: 20
+        },
+        //colors: [emotionColors[0], emotionColors[1], emotionColors[2], emotionColors[3], emotionColors[4], emotionColors[5] ],
+        title: {
+            text: '30-Word Moving Window Score Over Time'
+        },
+        xAxis:{
+        },
+        yAxis: {
+            min: 0,
+            max: 4,
+            tickInterval: 1,
+            title: {
+                text: 'Emotional Impact',
+                margin: 5
+            },
+            labels: {
+                formatter: function () {
+                    return yaxisValues[this.value];
+                }
+            }
+        },
+        plotOptions: {
+            spline: {
+                lineWidth: 4,
+                states: {
+                    hover: {
+                        lineWidth: 5
+                    }
+                },
+                marker: {
+                    enabled: false,
+                    states: {
+                        hover: {
+                            enabled: true,
+                            symbol: 'circle',
+                            radius: 5,
+                            lineWidth: 1
+                        }
+                    }
+                },
+                pointInterval: 1, // one hour
+                pointStart: 0
+            }
+        },
+        tooltip: {
+            formatter: function () {
+                return '<b>' + this.series.name + '</b><br/>' +
+								 this.x;
+            }
+        },
+        exporting: {
+            enabled: true
+        },
+        series: emaSeries
+    });
+}
+
+$(function() {
   // initial hide pageresults
   $pageresults = $('#pageresults');
   $pageresults.hide();
@@ -231,12 +334,13 @@ jQuery(function($) {
 
         // wordCloudScore
         $.each( wclouds, function( index, value ) {
-          $ecresults.prepend('<div class="col-sm-4 '+ value +'"><h4>'+ value +'</h4><div id="'+ value +'cloud" style="float: left; width: 300px; height: 300px; position: relative; margin: 2em 0"></div></div>');
+          $ecresults.append('<div class="col-sm-4 '+ value +'"><h4>'+ value +'</h4><div id="'+ value +'cloud" style="float: left; width: 300px; height: 300px; position: relative; margin: 2em 0"></div></div>');
           $('#'+value+'cloud').jQCloud( response['wordCloudScore'][value] );
         });
 
         // movingAverage30Score...
-
+        emaLevels = response['movingAverage30Score'];
+        chartMovingAverage();
         // and also un loading the btn
         $btn.button('reset');
       });

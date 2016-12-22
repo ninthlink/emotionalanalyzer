@@ -80,7 +80,7 @@ curl_setopt($ch, CURLOPT_HTTPHEADER, array(
 
 //print_r( $report );
 
-$result[ $sc ] = curl_exec( $ch );
+$result[ $sc ] = json_decode( curl_exec( $ch ) );
 
 $report = curl_getinfo( $ch );
 $result[ 'getinfo'. $sc ] = $report;

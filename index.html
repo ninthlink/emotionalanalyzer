@@ -157,13 +157,18 @@ var yaxisValues = ["Very Low", "Low", "Typical", "High", "Very High"];
 var wclouds = [ 'anxiety','hostility', 'depression', 'confidence', 'compassion', 'happiness' ];
 var emaChart;
 var emaLevels;
+var emaSeries;
 function chartMovingAverage() {
-  var emaSeries = [];
+  emaSeries = [];
   $.each(wclouds, function( index, value ) {
     // first check if we need to loop and clean the input to split values of array
     // that sounds confusing
     // issue is, effectcheck.com Api/MovingAverage30 gives results like
     // anxiety:{ ChartLevel: [1,2,3,...], Average..: [1,1,1,...gma] }
+    var ser = {
+      name: value,
+      data: []
+    }
     if ( $.isArray( emaLevels[value]['ChartLevel'] ) === false ) {
       // then in this case we assume our API returned something like
       // anxiety: [{'chartLevel':'.79','averagePerWord':'.06'},...]
@@ -173,25 +178,25 @@ function chartMovingAverage() {
       };
       // sigh, and then...
       $.each( emaLevels[value], function( i2, v2 ) {
-        cleanupArrs['ChartLevel'][i2] = parseFloat( v2['chartLevel'] );
-        cleanupArrs['AveragePerWord'][i2] = parseFloat( v2['averagePerWord'] );
+        cleanupArrs['ChartLevel'].push( parseFloat( v2['chartLevel'] ) );
+        ser.data.push( parseFloat( v2['chartLevel'] ) );
+        cleanupArrs['AveragePerWord'].push( parseFloat( v2['averagePerWord'] ) );
       });
       // then replace...
       emaLevels[value] = cleanupArrs;
+    } else {
+      ser.data = emaLevels[value]['ChartLevel'];
     }
 
-    emaSeries[index] = {
-        name: value,
-        data: emaLevels[value]['ChartLevel']
-    };
+    emaSeries.push(ser);
   });
-  /*
-  console.log('draw the chart?! emaLevels: ');
-  console.log(emaLevels);
-  console.log('emaSeries: ');
-  console.log(emaSeries);
-  */
-  emaChart = new Highcharts.Chart({
+
+  // console.log('draw the chart?! emaLevels: ');
+  // console.log(emaLevels);
+  // console.log('emaSeries: ');
+  // console.log(emaSeries);
+
+  var chartOptions = {
         chart: {
             renderTo: 'emachart',
             defaultSeriesType: 'spline',
@@ -219,43 +224,10 @@ function chartMovingAverage() {
                 }
             }
         },
-        plotOptions: {
-            spline: {
-                lineWidth: 4,
-                states: {
-                    hover: {
-                        lineWidth: 5
-                    }
-                },
-                marker: {
-                    enabled: true,
-                    states: {
-                        hover: {
-                            enabled: true,
-                            symbol: 'circle',
-                            radius: 5,
-                            lineWidth: 1
-                        }
-                    }
-                },
-                pointInterval: 1, // one hour
-                pointStart: 0
-            }
-        },
-        tooltip: {
-            formatter: function () {
-                return '<b>' + this.series.name + '</b><br/>' +
-								 this.x;
-            }
-        },
-        exporting: {
-            enabled: true
-        },
-        series: [{
-          name: 'anxiety',
-          data: emaLevels.anxiety.ChartLevel
-        }]
-    });
+        series: emaSeries
+    };
+    emaChart = new Highcharts.Chart( chartOptions );
+
 }
 
 $(function() {
@@ -333,7 +305,7 @@ $(function() {
       txt = txt.replace(/\n/g, " ");
 
       $.post('api/checker.php','t='+ txt, function(response) {
-        console.log('SUCCESS!');
+        console.log('API Success!');
         console.log(response);
 
         // yay! now (re)do stuff?
